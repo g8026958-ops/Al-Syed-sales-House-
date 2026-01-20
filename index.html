@@ -73,18 +73,6 @@ nav button{width:30%}
 </div>
 
 <script>
-// ===== PWA =====
-if ('serviceWorker' in navigator) {
- const sw = `
- self.addEventListener('fetch', e=>e.respondWith(fetch(e.request)));
- `;
- const blob = new Blob([sw],{type:'text/javascript'});
- navigator.serviceWorker.register(URL.createObjectURL(blob));
-}
-
-// ===== DATA =====
-let products = JSON.parse(localStorage.getItem("products")||"[]");
-let sales = JSON.parse(localStorage.getItem("sales")||"[]");
 
 // ===== LOGIN =====
 function login(){
