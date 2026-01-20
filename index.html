@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Hoorain Cosmetics</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+
+<style>
+body{margin:0;font-family:Arial;background:#f8d7e5;color:#000}
+header{background:#000;color:#ff69b4;padding:15px;text-align:center}
+button{padding:10px;margin:5px;background:#ff69b4;border:none;color:#000;font-weight:bold}
+input,select{padding:8px;margin:5px;width:90%}
+.card{background:#fff;margin:10px;padding:15px;border-radius:10px}
+.hidden{display:none}
+nav button{width:30%}
+.low{color:red;font-weight:bold}
+.hot{color:green;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>Hoorain Cosmetics</h2>
+<p>📞 0303-4141011</p>
+</header>
+
+<!-- LOGIN -->
+<div id="login" class="card">
+<h3>Enter PIN</h3>
+<input type="password" id="pin">
+<button onclick="login()">Login</button>
+<p id="err" style="color:red"></p>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<nav>
+<button onclick="show('dash')">Dashboard</button>
+<button onclick="show('prod')">Products</button>
+<button onclick="show('sale')">Sales</button>
+<button onclick="logout()">Logout</button>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="dash" class="card">
+<p>Today Sale: Rs <span id="todaySale">0</span></p>
+<p>Monthly Sale: Rs <span id="monthSale">0</span></p>
+<p>Total Products: <span id="totalProd">0</span></p>
+<p>Low Stock: <span id="lowStock">0</span></p>
+</div>
+
+<!-- PRODUCTS -->
+<div id="prod" class="card hidden">
+<h3>Add Product</h3>
+<input id="pname" placeholder="Name">
+<input id="pprice" type="number" placeholder="Price">
+<input id="pstock" type="number" placeholder="Stock">
+<button onclick="addProduct()">Add</button>
+<div id="plist"></div>
+</div>
+
+<!-- SALES -->
+<div id="sale" class="card hidden">
+<h3>Add Sale</h3>
+<select id="saleProd"></select>
+<input id="saleQty" type="number" placeholder="Qty">
+<button onclick="sell()">Sell</button>
+</div>
+
+</div>
+
+<script>
+// ===== PWA =====
+if ('serviceWorker' in navigator) {
+ const sw = `
+ self.addEventListener('fetch', e=>e.respondWith(fetch(e.request)));
+ `;
+ const blob = new Blob([sw],{type:'text/javascript'});
+ navigator.serviceWorker.register(URL.createObjectURL(blob));
+}
+
+// ===== DATA =====
+let products = JSON.parse(localStorage.getItem("products")||"[]");
+let sales = JSON.parse(localStorage.getItem("sales")||"[]");
+
+// ===== LOGIN =====
+function login(){
+ if(pin.value==="1234"){
+  localStorage.setItem("login","1");
+  init();
+ } else err.innerText="Wrong PIN";
+}
+function logout(){
+ localStorage.clear();
+ location.reload();
+}
+if(localStorage.getItem("login")) init();
+
+function init(){
+ login.style.display="none";
+ app.classList.remove("hidden");
+ show("dash");
+ render();
+}
+
+// ===== NAV =====
+function show(id){
+ ["dash","prod","sale"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+}
+
+// ===== PRODUCTS =====
+function addProduct(){
+ products.push({
+  name:pname.value,
+  price:+pprice.value,
+  stock:+pstock.value
+ });
+ save();
+ pname.value=pprice.value=pstock.value="";
+ render();
+}
+
+// ===== SALES =====
+function sell(){
+ let i=saleProd.value;
+ let q=+saleQty.value;
+ if(products[i].stock>=q){
+  products[i].stock-=q;
+  sales.push({amt:products[i].price*q,date:new Date()});
+  save();
+  saleQty.value="";
+  render();
+ }
+}
+
+// ===== RENDER =====
+function render(){
+ plist.innerHTML="";
+ saleProd.innerHTML="";
+ let low=0, today=0, month=0;
+ let now=new Date();
+
+ products.forEach((p,i)=>{
+  if(p.stock<=5) low++;
+  plist.innerHTML+=`<p>${p.name} | Rs ${p.price} | Stock ${p.stock}</p>`;
+  saleProd.innerHTML+=`<option value="${i}">${p.name}</option>`;
+ });
+
+ sales.forEach(s=>{
+  let d=new Date(s.date);
+  if(d.toDateString()===now.toDateString()) today+=s.amt;
+  if(d.getMonth()===now.getMonth()) month+=s.amt;
+ });
+
+ todaySale.innerText=today;
+ monthSale.innerText=month;
+ totalProd.innerText=products.length;
+ lowStock.innerText=low;
+}
+
+function save(){
+ localStorage.setItem("products",JSON.stringify(products));
+ localStorage.setItem("sales",JSON.stringify(sales));
+}
+</script>
+
+</body>
+</html>
